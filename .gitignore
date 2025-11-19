@@ -1,0 +1,48 @@
+# Entornos virtuales
+venv/
+.env/
+.venv/
+ENV/
+env/
+
+# Bytecode de Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Archivos temporales y de sistema
+*.log
+*.pot
+*.mo
+*.swp
+.DS_Store
+Thumbs.db
+
+# Configuraciones de editor
+#.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Variables de entorno
+.env
+.env.*
+
+# Base de datos local o archivos SQLite temporales
+*.sqlite3
+*.db
+
+# Archivos de configuración personalizados
+*.local
+
+# Migraciones (si usas Alembic y quieres ignorar hasta que esté listo)
+alembic.ini
+migrations/
+
+# Compilaciones o dependencias externas
+dist/
+build/
+*.egg-info/
+
+# Otros archivos de sistema
+pip-log.txt
