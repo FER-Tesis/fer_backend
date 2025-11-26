@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserLookup
+from app.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserLookup, UserSummary
 from app.services import user_service
 from typing import List
 
@@ -43,3 +43,12 @@ async def find_user(data: UserLookup):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@router.get(
+    "/summary",
+    response_model=UserSummary,
+    status_code=status.HTTP_200_OK
+)
+async def get_user_summary():
+    summary = await user_service.get_summary()
+    return summary

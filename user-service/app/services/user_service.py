@@ -24,3 +24,14 @@ async def delete_user(user_id: str):
 
 async def get_user_by_email(email: str):
     return await user_repository.get_user_by_email(email)
+
+from app.schemas.user_schema import UserSummary
+
+async def get_summary():
+    total = await user_repository.count_all_users()
+    active_agents = await user_repository.count_active_agents()
+
+    return UserSummary(
+        totalUsers=total,
+        activeAgents=active_agents
+    )

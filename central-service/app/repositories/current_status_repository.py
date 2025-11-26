@@ -35,3 +35,8 @@ async def get_all_statuses(limit: int = 100):
 async def get_status_by_camera_id(camera_id: str):
     db = await get_db()
     return await db["current_emotion_status"].find_one({"camera_id": camera_id})
+
+async def get_status_by_agent_id(agent_id: str):
+    db = await get_db()
+    collection = db["current_emotion_status"]
+    return await collection.find_one({"agent_id": agent_id})

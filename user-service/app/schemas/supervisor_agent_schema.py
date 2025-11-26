@@ -1,8 +1,9 @@
-from typing import Optional, Any
+from typing import Any
 from bson import ObjectId
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from pydantic_core import core_schema
 from pydantic.json_schema import JsonSchemaValue
+
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -15,7 +16,9 @@ class PyObjectId(ObjectId):
 
     @classmethod
     def __get_pydantic_json_schema__(
-        cls, core_schema: core_schema.CoreSchema, handler
+        cls,
+        core_schema: core_schema.CoreSchema,
+        handler
     ) -> JsonSchemaValue:
         return {"type": "string", "example": "64c8af88a9b74e2c1a35c9e1"}
 
@@ -27,25 +30,16 @@ class PyObjectId(ObjectId):
             raise ValueError("Invalid ObjectId")
         return str(v)
 
-class UserCreate(BaseModel):
-    name: str = Field(..., example="Carlos Ruiz")
-    email: EmailStr = Field(..., example="carlos@empresa.com")
-    password: str = Field(..., min_length=6, example="StrongPass123")
-    role: str = Field(..., example="supervisor")
-    is_active: bool = True
 
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    role: Optional[str] = None
-    is_active: Optional[bool] = None
+class SupervisorAgentCreate(BaseModel):
+    supervisor_id: PyObjectId = Field(..., example="64c8af88a9b74e2c1a35c9e1")
+    agent_id: PyObjectId = Field(..., example="64c8af88a9b74e2c1a35c9e9")
 
-class UserResponse(BaseModel):
+
+class SupervisorAgentResponse(BaseModel):
     id: PyObjectId = Field(alias="_id")
-    name: str
-    email: EmailStr
-    role: str
-    is_active: bool
+    supervisor_id: PyObjectId
+    agent_id: PyObjectId
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,9 +47,10 @@ class UserResponse(BaseModel):
         json_encoders={ObjectId: str},
     )
 
-class UserLookup(BaseModel):
-    email: EmailStr
+class RelationLookup(BaseModel):
+    agent_id: str = Field(..., example="691dbadecd777ce88c0ebd66")
 
-class UserSummary(BaseModel):
-    totalUsers: int
-    activeAgents: int
+class AgentMinimal(BaseModel):
+    id: str
+    name: str
+    email: str
