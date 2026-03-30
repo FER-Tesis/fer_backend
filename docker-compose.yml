@@ -1,0 +1,41 @@
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./user-service:/app
+    env_file:
+      - ./user-service/.env
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./auth-service:/app
+    env_file:
+      - ./auth-service/.env
+
+  camera-service:
+    build: ./camera-service
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./camera-service:/app
+    env_file:
+      - ./camera-service/.env
+
+  central-service:
+    build: ./central-service
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./central-service:/app
+    env_file:
+      - ./central-service/.env
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

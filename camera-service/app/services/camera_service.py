@@ -68,3 +68,17 @@ async def update_camera(camera_id: str, update: dict) -> dict | None:
 
 async def delete_camera(camera_id: str) -> bool:
     return await camera_repository.delete_camera(camera_id)
+
+async def get_camera_by_assigned_user(user_id: str) -> dict | None:
+    return await camera_repository.get_camera_by_assigned_user_id(user_id)
+
+async def update_camera_status(camera_id: str, status: CameraStatus) -> dict:
+    camera = await camera_repository.get_camera_by_id(camera_id)
+    if not camera:
+        raise CameraDomainError("camera_not_found")
+
+    updated_camera = await camera_repository.update_camera_status(
+        camera_id=camera_id,
+        status=status.value
+    )
+    return updated_camera

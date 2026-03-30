@@ -35,6 +35,7 @@ class PyObjectId(ObjectId):
 
 class EmotionEventCreate(BaseModel):
     camera_id: str = Field(..., example="64c8af88a9b74e2c1a35c9e1")
+    capture_session_id: str = Field(..., example="64c8af88a9b74e2c1a35c9e1")
     emotion: str = Field(..., example="neutral")
     timestamp: datetime = Field(..., example="2025-02-10T18:01:22Z")
 

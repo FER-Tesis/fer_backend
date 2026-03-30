@@ -153,7 +153,6 @@ async def get_supervisor_agents_with_status(supervisor_id: str):
         raise ValueError("Supervisor not found or user-service error")
 
     agents = response.json()
-
     result = []
 
     for agent in agents:

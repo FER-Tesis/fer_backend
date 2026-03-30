@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
-from app.schemas.camera_schema import CameraCreate, CameraUpdate, CameraResponse
+from app.schemas.camera_schema import CameraCreate, CameraUpdate, CameraResponse, UpdateCameraStatusRequest
 from app.services import camera_service
 
 router = APIRouter()
@@ -68,3 +68,35 @@ async def delete_camera(camera_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Camera not found")
     
     return {"message": "Camera deleted successfully"}
+
+@router.get("/cameras/assigned/user/{user_id}", response_model=CameraResponse)
+async def get_camera_by_assigned_user(user_id: str):
+    camera = await camera_service.get_camera_by_assigned_user(user_id)
+
+    if not camera:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No camera assigned to this user"
+        )
+
+    return camera
+
+@router.patch("/cameras/{camera_id}/status", response_model=CameraResponse)
+async def update_camera_status(camera_id: str, payload: UpdateCameraStatusRequest):
+    try:
+        return await camera_service.update_camera_status(
+            camera_id=camera_id,
+            status=payload.status
+        )
+
+    except camera_service.CameraDomainError as e:
+        if str(e) == "camera_not_found":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Camera not found"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid camera status update request"
+        )

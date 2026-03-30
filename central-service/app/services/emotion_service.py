@@ -2,6 +2,7 @@ from datetime import datetime
 import httpx
 
 from app.core.config import settings
+from app.events.event_bus import event_bus
 from app.enums.emotion_type import Emotion
 from app.schemas.emotion_schema import EmotionEventCreate
 from app.repositories import emotion_event_repository, current_status_repository
@@ -15,7 +16,7 @@ class EmotionDomainError(ValueError):
 
 async def _fetch_camera(camera_id: str) -> dict:
     async with httpx.AsyncClient() as client:
-        url = f"{settings.CAMERA_SERVICE_URL}/cameras/{camera_id}"
+        url = f"{settings.CAMERA_SERVICE_URL}/camera/cameras/{camera_id}"
         response = await client.get(url)
 
         if response.status_code != 200:
@@ -32,6 +33,22 @@ async def _validate_agent_from_camera(camera: dict) -> str:
 
     return agent_id
 
+async def _validate_capture_session_active(capture_session_id: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{settings.CAMERA_SERVICE_URL}/capture/sessions/{capture_session_id}/active"
+        )
+
+        if response.status_code == 404:
+            raise EmotionDomainError("capture_session_not_found")
+
+        if response.status_code != 200:
+            raise EmotionDomainError("capture_session_validation_failed")
+
+        data = response.json()
+
+        if not data.get("active", False):
+            raise EmotionDomainError("capture_session_inactive")
 
 async def register_emotion_event(event: EmotionEventCreate) -> dict:
     try:
@@ -41,12 +58,14 @@ async def register_emotion_event(event: EmotionEventCreate) -> dict:
 
     normalized_timestamp = ensure_utc(event.timestamp)
 
-    camera = await _fetch_camera(event.camera_id)
+    await _validate_capture_session_active(event.capture_session_id)
 
+    camera = await _fetch_camera(event.camera_id)
     agent_id = await _validate_agent_from_camera(camera)
 
     event_data = {
         "camera_id": event.camera_id,
+        "capture_session_id": event.capture_session_id,
         "agent_id": agent_id,
         "emotion": validated_emotion.value,
         "timestamp": normalized_timestamp,
@@ -64,8 +83,16 @@ async def register_emotion_event(event: EmotionEventCreate) -> dict:
             timestamp=normalized_timestamp,
         )
 
-    return created_event
+        await event_bus.publish(
+            "agent-emotion-updated",
+            {
+                "agent_id": agent_id,
+                "emotion": validated_emotion.value,
+                "timestamp": normalized_timestamp.isoformat(),
+            },
+        )
 
+    return created_event
 
 async def list_emotion_events(limit: int = 100):
     return await emotion_event_repository.get_emotion_events(limit)

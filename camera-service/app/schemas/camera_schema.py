@@ -55,3 +55,6 @@ class CameraResponse(BaseModel):
         populate_by_name=True,
         from_attributes=True,
     )
+
+class UpdateCameraStatusRequest(BaseModel):
+    status: CameraStatus

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from app.schemas.auth_schema import RegisterRequest, LoginRequest, TokenResponse, TokenRequest, TokenVerificationResponse
-from app.services.auth_service import register_user, authenticate_user, verify_token, AuthError
+from app.services.auth_service import register_user, authenticate_user, logout_user, verify_token, AuthError
 
 router = APIRouter()
 
@@ -17,6 +17,13 @@ async def login(credentials: LoginRequest):
         return await authenticate_user(credentials.email, credentials.password)
     except AuthError as e:
         raise HTTPException(status_code=401, detail=str(e))
+    
+@router.post("/logout")
+async def logout(body: TokenRequest):
+    try:
+        return await logout_user(body.token)
+    except AuthError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/verify-token", response_model=TokenVerificationResponse)
 async def verify_token_endpoint(body: TokenRequest):

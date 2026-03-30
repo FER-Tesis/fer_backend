@@ -1,5 +1,6 @@
 from app.repositories import supervisor_agent_repository, user_repository
 from app.schemas.supervisor_agent_schema import SupervisorAgentCreate
+from app.events.event_bus import event_bus
 
 
 class SupervisorAgentDomainError(ValueError):
@@ -27,7 +28,21 @@ async def create_relation(payload: SupervisorAgentCreate):
         "agent_id": agent_id
     }
 
-    return await supervisor_agent_repository.create_relation(data)
+    created = await supervisor_agent_repository.create_relation(data)
+
+    await event_bus.publish(
+        "relation-assigned",
+        {
+            "supervisor_id": supervisor_id,
+            "agent": {
+                "id": agent_id,
+                "name": agent["name"],
+                "email": agent["email"],
+            }
+        }
+    )
+
+    return created
 
 
 async def list_by_supervisor(supervisor_id: str):
@@ -71,4 +86,20 @@ async def get_available_agents():
     return free_agents
 
 async def remove_agent(supervisor_id: str, agent_id: str) -> bool:
-    return await supervisor_agent_repository.remove_by_supervisor_agent(supervisor_id, agent_id)
+    supervisor_id = str(supervisor_id)
+    agent_id = str(agent_id)
+
+    deleted = await supervisor_agent_repository.remove_by_supervisor_agent(supervisor_id, agent_id)
+
+    if not deleted:
+        raise SupervisorAgentDomainError("relation_not_found")
+
+    await event_bus.publish(
+        "relation-removed",
+        {
+            "supervisor_id": supervisor_id,
+            "agent_id": agent_id
+        }
+    )
+
+    return True

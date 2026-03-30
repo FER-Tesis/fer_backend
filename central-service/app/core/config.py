@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     MONGO_URI: str = ""
     USER_SERVICE_URL: str = ""
     CAMERA_SERVICE_URL: str = ""
+    REDIS_URL: str = ""
 
     class Config:
         env_file = ".env"

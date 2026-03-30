@@ -63,3 +63,30 @@ async def delete_camera(camera_id: str) -> bool:
     res = await collection.delete_one({"_id": ObjectId(camera_id)})
     
     return res.deleted_count == 1
+
+async def get_camera_by_assigned_user_id(user_id: str) -> dict | None:
+    db = await get_db()
+    collection = db["cameras"]
+    doc = await collection.find_one({"assigned_user_id": user_id})
+
+    return serialize_document(doc)
+
+async def update_camera_status(camera_id: str, status: str) -> dict | None:
+    db = await get_db()
+    collection = db["cameras"]
+
+    if not ObjectId.is_valid(camera_id):
+        return None
+
+    object_id = ObjectId(camera_id)
+
+    result = await collection.update_one(
+        {"_id": object_id},
+        {"$set": {"status": status}}
+    )
+
+    if result.matched_count == 0:
+        return None
+
+    updated_camera = await collection.find_one({"_id": object_id})
+    return serialize_document(updated_camera)
