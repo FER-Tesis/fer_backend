@@ -35,6 +35,15 @@ services:
     env_file:
       - ./central-service/.env
 
+  alert-service:
+    build: ./alert-service
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./alert-service:/app
+    env_file:
+      - ./alert-service/.env
+
   redis:
     image: redis:7
     ports:

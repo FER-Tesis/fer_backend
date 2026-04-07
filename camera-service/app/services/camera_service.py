@@ -10,6 +10,19 @@ class CameraDomainError(ValueError):
     """Errores de negocio en el servicio de cámaras."""
     pass
 
+async def _create_camera_alert(camera_id: str):
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.post(
+            f"{settings.ALERT_SERVICE_URL}",
+            json={
+                "camera_id": camera_id,
+                "description": "La cámara fue reportada en mantenimiento."
+            }
+        )
+
+        if response.status_code not in (200, 201):
+            raise CameraDomainError("camera_alert_creation_failed")
+
 async def validate_assigned_user(user_id: str):
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.USER_SERVICE_URL}/users/{user_id}")
@@ -77,8 +90,20 @@ async def update_camera_status(camera_id: str, status: CameraStatus) -> dict:
     if not camera:
         raise CameraDomainError("camera_not_found")
 
+    previous_status = camera["status"]
+
     updated_camera = await camera_repository.update_camera_status(
         camera_id=camera_id,
         status=status.value
     )
+
+    if (
+        status == CameraStatus.maintenance
+        and previous_status != CameraStatus.maintenance.value
+    ):
+        try:
+            await _create_camera_alert(camera_id)
+        except CameraDomainError:
+            raise
+
     return updated_camera

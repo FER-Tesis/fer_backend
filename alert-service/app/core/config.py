@@ -1,12 +1,12 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "camera-service"
+    PROJECT_NAME: str = "alert-service"
     MONGO_URI: str = ""
     USER_SERVICE_URL: str = ""
-    ALERT_SERVICE_URL: str = ""
-    CAMERA_HUB_URL: str = ""
-    
+    CAMERA_SERVICE_URL: str = ""
+    REDIS_URL: str = ""
+
     class Config:
         env_file = ".env"
 
