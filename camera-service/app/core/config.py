@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str = ""
     ALERT_SERVICE_URL: str = ""
     CAMERA_HUB_URL: str = ""
+    REDIS_URL: str = ""
     
     class Config:
         env_file = ".env"

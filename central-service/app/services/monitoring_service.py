@@ -12,7 +12,8 @@ from app.schemas.monitoring_schema import (
     AgentCurrentEmotionResponse,
     AgentDayHistoryResponse,
     AgentWeekHistoryResponse,
-    SupervisorAgentStatus
+    SupervisorAgentStatus,
+    SupervisorCameraTableItem
 )
 
 from app.enums.emotion_type import Emotion
@@ -75,6 +76,78 @@ def peru_today():
     now_utc = datetime.now(timezone.utc)
     now_peru = now_utc - timedelta(hours=5)
     return now_peru.date()
+
+async def _fetch_supervisor_agents(supervisor_id: str) -> list[dict]:
+    user_service_url = f"{settings.USER_SERVICE_URL}/relations/supervisor/{supervisor_id}"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(user_service_url)
+
+    if response.status_code != 200:
+        raise ValueError("Supervisor not found or user-service error")
+
+    return response.json()
+
+
+async def _fetch_camera_by_agent(agent_id: str) -> dict | None:
+    url = f"{settings.CAMERA_SERVICE_URL}/camera/cameras/assigned/user/{agent_id}"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+
+    if response.status_code == 404:
+        return None
+
+    if response.status_code != 200:
+        raise ValueError("camera-service error while fetching assigned camera")
+
+    return response.json()
+
+
+async def _fetch_last_capture_session(camera_id: str) -> dict:
+    url = f"{settings.CAMERA_SERVICE_URL}/capture/{camera_id}/last/session"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+
+    if response.status_code == 404:
+        raise ValueError("Camera not found while fetching last session")
+
+    if response.status_code != 200:
+        raise ValueError("camera-service error while fetching last capture session")
+
+    return response.json()
+
+async def build_supervisor_camera_row(agent: dict) -> SupervisorCameraTableItem:
+    camera = await _fetch_camera_by_agent(agent["id"])
+
+    if not camera:
+        return SupervisorCameraTableItem(
+            camera_id=None,
+            camera_name="Camara no asignada",
+            agent_id=agent["id"],
+            agent_name=agent["name"],
+            status=None,
+            last_connection=None,
+            monitoring_active=False,
+        )
+
+    last_session = await _fetch_last_capture_session(camera["_id"])
+
+    last_connection = (
+        last_session.get("started_at")
+        or last_session.get("ended_at")
+    )
+
+    return SupervisorCameraTableItem(
+        camera_id=camera["_id"],
+        camera_name=camera["name"],
+        agent_id=agent["id"],
+        agent_name=agent["name"],
+        status=camera["status"],
+        last_connection=last_connection,
+        monitoring_active=bool(last_session.get("active", False)),
+    )
 
 async def get_agent_current(agent_id: str) -> AgentCurrentEmotionResponse:
     status = await current_status_repository.get_status_by_agent_id(agent_id)
@@ -167,5 +240,15 @@ async def get_supervisor_agents_with_status(supervisor_id: str):
                 timestamp = current.timestamp
             )
         )
+
+    return result
+
+async def get_supervisor_cameras_table(supervisor_id: str) -> list[SupervisorCameraTableItem]:
+    agents = await _fetch_supervisor_agents(supervisor_id)
+    result: list[SupervisorCameraTableItem] = []
+
+    for agent in agents:
+        row = await build_supervisor_camera_row(agent)
+        result.append(row)
 
     return result

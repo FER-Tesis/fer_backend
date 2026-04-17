@@ -32,7 +32,7 @@ async def _handle_agent_capture_on_login(user: dict):
             raise AuthError("Invalid camera response")
 
         start_response = await client.post(
-            f"{settings.CAMERA_SERVICE_URL}/capture/cameras/{camera_id}/start"
+            f"{settings.CAMERA_SERVICE_URL}/capture/{camera_id}/start"
         )
 
         if start_response.status_code in (200, 201, 409):
@@ -63,7 +63,7 @@ async def _handle_agent_capture_on_logout(user_id: str, role: str | None):
             raise AuthError("Invalid camera response")
 
         stop_response = await client.post(
-            f"{settings.CAMERA_SERVICE_URL}/capture/cameras/{camera_id}/stop"
+            f"{settings.CAMERA_SERVICE_URL}/capture/{camera_id}/stop"
         )
 
         if stop_response.status_code in (200, 404):

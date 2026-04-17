@@ -22,3 +22,11 @@ class SupervisorAgentStatus(BaseModel):
     emotion: Optional[Emotion] = None
     timestamp: Optional[datetime] = None
 
+class SupervisorCameraTableItem(BaseModel):
+    camera_id: Optional[str]
+    camera_name: str
+    agent_id: str
+    agent_name: str
+    status: Optional[str]
+    last_connection: Optional[datetime]
+    monitoring_active: bool

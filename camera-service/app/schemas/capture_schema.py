@@ -32,3 +32,10 @@ class CaptureSessionActiveResponse(BaseModel):
 class CameraMonitoringStatusResponse(BaseModel):
     camera_id: str
     active: bool
+
+class LastCaptureSessionResponse(BaseModel):
+    camera_id: str
+    capture_session_id: Optional[str]
+    active: bool
+    started_at: Optional[datetime]
+    ended_at: Optional[datetime]

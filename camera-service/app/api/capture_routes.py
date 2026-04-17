@@ -4,7 +4,8 @@ from app.schemas.capture_schema import (
     CaptureStartResponse,
     CaptureStopResponse,
     CaptureSessionActiveResponse,
-    CameraMonitoringStatusResponse
+    CameraMonitoringStatusResponse,
+    LastCaptureSessionResponse
 )
 from app.services import capture_service
 
@@ -128,6 +129,26 @@ async def get_capture_session_active(capture_session_id: str):
 async def get_camera_status(camera_id: str):
     try:
         return await capture_service.get_camera_monitoring_status(camera_id)
+
+    except capture_service.CaptureDomainError as e:
+        if str(e) == "camera_not_found":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Camera not found"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request"
+        )
+    
+@router.get(
+    "/{camera_id}/last/session",
+    response_model=LastCaptureSessionResponse
+)
+async def get_last_capture_session(camera_id: str):
+    try:
+        return await capture_service.get_last_capture_session(camera_id)
 
     except capture_service.CaptureDomainError as e:
         if str(e) == "camera_not_found":

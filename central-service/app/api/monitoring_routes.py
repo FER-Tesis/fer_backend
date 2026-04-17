@@ -6,7 +6,8 @@ from app.schemas.monitoring_schema import (
     AgentCurrentEmotionResponse,
     AgentDayHistoryResponse,
     AgentWeekHistoryResponse,
-    SupervisorAgentStatus
+    SupervisorAgentStatus,
+    SupervisorCameraTableItem
 )
 
 from app.services import monitoring_service
@@ -36,4 +37,18 @@ async def get_supervisor_agents(supervisor_id: str):
         raise HTTPException(status_code=404, detail=str(e))
 
     except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.get(
+    "/supervisor/{supervisor_id}/cameras",
+    response_model=List[SupervisorCameraTableItem]
+)
+async def get_supervisor_cameras(supervisor_id: str):
+    try:
+        return await monitoring_service.get_supervisor_cameras_table(supervisor_id)
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")

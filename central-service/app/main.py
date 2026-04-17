@@ -7,6 +7,7 @@ from app.db.connection import connect_db, close_db
 from app.events.event_bus import event_bus
 from app.realtime.agent_emotion_listener import agent_emotion_listener
 from app.realtime.supervisor_listener import supervisor_listener
+from app.realtime.supervisor_camera_listener import supervisor_camera_listener
 
 app = FastAPI(title="Central Service", version="1.0")
 
@@ -18,11 +19,13 @@ async def startup_event():
     await event_bus.connect()
     await agent_emotion_listener.start()
     await supervisor_listener.start()
+    await supervisor_camera_listener.start()
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await agent_emotion_listener.stop()
     await supervisor_listener.stop()
+    await supervisor_camera_listener.stop()
     await event_bus.disconnect()
     await close_db()
 

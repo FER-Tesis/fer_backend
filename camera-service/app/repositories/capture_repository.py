@@ -45,3 +45,14 @@ async def close_capture_session(session_id: str) -> dict | None:
     updated = await collection.find_one({"_id": session_id})
 
     return serialize_document(updated)
+
+async def get_last_session_by_camera_id(camera_id: str) -> dict | None:
+    db = await get_db()
+    collection = db["capture_sessions"]
+
+    doc = await collection.find_one(
+        {"camera_id": camera_id},
+        sort=[("started_at", -1)]
+    )
+
+    return serialize_document(doc)

@@ -3,6 +3,7 @@ from uuid import uuid4
 import httpx
 
 from app.core.config import settings
+from app.events.event_bus import event_bus
 from app.repositories import camera_repository, capture_repository
 
 
@@ -21,7 +22,7 @@ def _validate_camera_available_for_monitoring(camera: dict) -> None:
         raise CaptureDomainError("camera_in_maintenance")
 
 
-async def get_hub_camera_status(camera_id: str, active_session: dict | None = None) -> bool:
+async def _get_hub_camera_active(camera_id: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(
@@ -29,24 +30,30 @@ async def get_hub_camera_status(camera_id: str, active_session: dict | None = No
             )
 
         if response.status_code >= 400:
-            hub_active = False
-        else:
-            data = response.json()
-            hub_active = bool(data.get("active", False))
+            return False
+
+        data = response.json()
+        return bool(data.get("active", False))
 
     except httpx.HTTPError:
-        hub_active = False
-
-    if active_session and not hub_active:
-        await capture_repository.close_capture_session(active_session["_id"])
         return False
+    
+async def _stop_hub_camera(camera_id: str) -> None:
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(
+                f"{settings.CAMERA_HUB_URL}/{camera_id}/stop"
+            )
 
-    return hub_active
+        if response.status_code >= 400:
+            raise CaptureDomainError("hub_stop_failed")
+
+    except httpx.HTTPError:
+        raise CaptureDomainError("hub_unreachable")
 
 
 async def sync_camera_monitoring_status(camera: dict) -> bool:
     camera_id = camera["_id"]
-
     active_session = await capture_repository.get_active_session_by_camera_id(camera_id)
 
     if camera.get("status") != "active":
@@ -57,13 +64,13 @@ async def sync_camera_monitoring_status(camera: dict) -> bool:
     if not active_session:
         return False
 
-    hub_active = await get_hub_camera_status(camera_id, active_session)
+    hub_active = await _get_hub_camera_active(camera_id)
 
-    if active_session and hub_active:
-        return True
+    if not hub_active:
+        await capture_repository.close_capture_session(active_session["_id"])
+        return False
 
-    return False
-
+    return True
 
 async def start_capture(camera_id: str) -> dict:
     camera = await camera_repository.get_camera_by_id(camera_id)
@@ -75,6 +82,10 @@ async def start_capture(camera_id: str) -> dict:
     is_really_active = await sync_camera_monitoring_status(camera)
     if is_really_active:
         raise CaptureDomainError("capture_already_active")
+
+    hub_active = await _get_hub_camera_active(camera_id)
+    if hub_active:
+        await _stop_hub_camera(camera_id)
 
     capture_session_id = str(uuid4())
 
@@ -103,12 +114,21 @@ async def start_capture(camera_id: str) -> dict:
         await capture_repository.close_capture_session(capture_session_id)
         raise CaptureDomainError("hub_unreachable")
 
+    await event_bus.publish(
+        "capture-session-started",
+        {
+            "camera_id": camera_id,
+            "capture_session_id": capture_session_id,
+            "active": True,
+            "started_at": session_data["started_at"].isoformat(),
+        }
+    )
+
     return {
         "capture_session_id": capture_session_id,
         "camera_id": camera_id,
         "active": True
     }
-
 
 async def stop_capture(camera_id: str) -> dict:
     camera = await camera_repository.get_camera_by_id(camera_id)
@@ -121,19 +141,20 @@ async def stop_capture(camera_id: str) -> dict:
 
     session_id = active_session["_id"]
 
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(
-                f"{settings.CAMERA_HUB_URL}/{camera_id}/stop"
-            )
-
-        if response.status_code >= 400:
-            raise CaptureDomainError("hub_stop_failed")
-
-    except httpx.HTTPError:
-        raise CaptureDomainError("hub_unreachable")
+    await _stop_hub_camera(camera_id)
 
     closed_session = await capture_repository.close_capture_session(session_id)
+
+    await event_bus.publish(
+        "capture-session-closed",
+        {
+            "camera_id": camera_id,
+            "capture_session_id": session_id,
+            "active": closed_session["active"],
+            "started_at": closed_session.get("started_at").isoformat() if closed_session.get("started_at") else None,
+            "ended_at": closed_session.get("ended_at").isoformat() if closed_session.get("ended_at") else None,
+        }
+    )
 
     return {
         "message": "Capture stopped successfully",
@@ -141,7 +162,6 @@ async def stop_capture(camera_id: str) -> dict:
         "camera_id": camera_id,
         "active": closed_session["active"]
     }
-
 
 async def get_capture_session_active(capture_session_id: str) -> dict:
     session = await capture_repository.get_session_by_id(capture_session_id)
@@ -165,4 +185,28 @@ async def get_camera_monitoring_status(camera_id: str) -> dict:
     return {
         "camera_id": camera_id,
         "active": active
+    }
+
+async def get_last_capture_session(camera_id: str) -> dict:
+    camera = await camera_repository.get_camera_by_id(camera_id)
+    if not camera:
+        raise CaptureDomainError("camera_not_found")
+
+    session = await capture_repository.get_last_session_by_camera_id(camera_id)
+
+    if not session:
+        return {
+            "camera_id": camera_id,
+            "capture_session_id": None,
+            "active": False,
+            "started_at": None,
+            "ended_at": None,
+        }
+
+    return {
+        "camera_id": camera_id,
+        "capture_session_id": session["_id"],
+        "active": session["active"],
+        "started_at": session.get("started_at"),
+        "ended_at": session.get("ended_at"),
     }
