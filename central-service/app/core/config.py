@@ -7,6 +7,14 @@ class Settings(BaseSettings):
     CAMERA_SERVICE_URL: str = ""
     REDIS_URL: str = ""
 
+    MINIO_ENDPOINT: str = ""
+    MINIO_ACCESS_KEY: str = ""
+    MINIO_SECRET_KEY: str = ""
+    MINIO_BUCKET: str = "exports"
+    MINIO_SECURE: bool = False
+
+    EXPORT_FILE_TTL_MINUTES: int = 20
+
     class Config:
         env_file = ".env"
 

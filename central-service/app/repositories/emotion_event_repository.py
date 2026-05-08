@@ -36,3 +36,22 @@ async def get_emotion_events_for_agent_between(
 
     items = await cursor.to_list(length=None)
     return serialize_list(items)
+
+async def get_emotion_events_between(
+    start: datetime,
+    end: datetime,
+    agent_ids: list[str] | None = None,
+):
+    db = await get_db()
+    collection = db["emotion_events"]
+
+    query = {
+        "timestamp": {"$gte": start, "$lte": end},
+    }
+
+    if agent_ids:
+        query["agent_id"] = {"$in": agent_ids}
+
+    cursor = collection.find(query).sort("timestamp", 1)
+    items = await cursor.to_list(length=None)
+    return serialize_list(items)
