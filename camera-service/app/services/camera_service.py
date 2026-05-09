@@ -2,7 +2,7 @@ from datetime import datetime
 import httpx
 from fastapi import HTTPException, status
 from app.repositories import camera_repository
-from app.schemas.camera_schema import CameraCreate, CameraUpdate
+from app.schemas.camera_schema import CameraCreate, CameraUpdate, CamerasMetrics
 from app.enums.camera_status import CameraStatus
 from app.core.config import settings
 from app.events.event_bus import event_bus
@@ -174,3 +174,16 @@ async def update_camera_status(camera_id: str, status: CameraStatus) -> dict:
         )
 
     return updated_camera
+
+async def get_cameras_metrics():
+    total = await camera_repository.count_all_cameras()
+    active_cameras = await camera_repository.count_active_cameras()
+    inactive_cameras = await camera_repository.count_inactive_cameras()
+    maintenance_cameras = await camera_repository.count_maintenance_cameras()
+
+    return CamerasMetrics (
+        totalCameras=total,
+        activeCameras=active_cameras,
+        inactiveCameras=inactive_cameras,
+        maintenanceCameras=maintenance_cameras
+    )

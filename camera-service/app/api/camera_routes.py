@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
-from app.schemas.camera_schema import CameraCreate, CameraUpdate, CameraResponse, UpdateCameraStatusRequest
+from app.schemas.camera_schema import CameraCreate, CameraUpdate, CameraResponse, UpdateCameraStatusRequest, CamerasMetrics
 from app.services import camera_service
 
 router = APIRouter()
@@ -23,6 +23,15 @@ async def create_camera(camera: CameraCreate):
 @router.get("/cameras", response_model=List[CameraResponse])
 async def list_cameras():
     return await camera_service.list_cameras()
+
+@router.get(
+    "/cameras/metrics",
+    response_model=CamerasMetrics,
+    status_code=status.HTTP_200_OK
+)
+async def get_cameras_metrics():
+    metrics = await camera_service.get_cameras_metrics()
+    return metrics
 
 @router.get("/cameras/{camera_id}", response_model=CameraResponse)
 async def get_camera(camera_id: str):

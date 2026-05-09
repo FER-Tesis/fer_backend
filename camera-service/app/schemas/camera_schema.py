@@ -48,7 +48,7 @@ class CameraResponse(BaseModel):
     location: str
     ip_address: str
     status: CameraStatus
-    assigned_user_id: str
+    assigned_user_id: Optional[str] = None
     last_checked: Optional[datetime]
 
     model_config = ConfigDict(
@@ -58,3 +58,9 @@ class CameraResponse(BaseModel):
 
 class UpdateCameraStatusRequest(BaseModel):
     status: CameraStatus
+
+class CamerasMetrics(BaseModel):
+    totalCameras: int
+    activeCameras: int
+    inactiveCameras: int
+    maintenanceCameras: int

@@ -1,5 +1,5 @@
 from app.repositories import user_repository
-from app.schemas.user_schema import UserCreate
+from app.schemas.user_schema import UserCreate, UsersMetrics
 from app.core.security import hash_password
 
 async def create_user(user_data: UserCreate):
@@ -25,13 +25,11 @@ async def delete_user(user_id: str):
 async def get_user_by_email(email: str):
     return await user_repository.get_user_by_email(email)
 
-from app.schemas.user_schema import UserSummary
-
-async def get_summary():
+async def get_users_metrics():
     total = await user_repository.count_all_users()
     active_agents = await user_repository.count_active_agents()
 
-    return UserSummary(
+    return UsersMetrics(
         totalUsers=total,
         activeAgents=active_agents
     )

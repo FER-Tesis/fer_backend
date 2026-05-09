@@ -1,6 +1,5 @@
 from bson import ObjectId
 from app.db.connection import get_db
-from app.schemas.user_schema import UserCreate
 from app.utils.mongo_helpers import serialize_document, serialize_list
 
 async def create_user(user_data: dict):

@@ -42,7 +42,7 @@ async def update_camera(camera_id: str, data: dict) -> dict | None:
     
     db = await get_db()
     collection = db["cameras"]
-    data = {k: v for k, v in data.items() if v is not None}
+    data = {k: v for k, v in data.items() if v is not None or k == "assigned_user_id"}
     data["last_checked"] = datetime.utcnow()
     result = await collection.update_one({"_id": ObjectId(camera_id)}, {"$set": data})
 
@@ -90,3 +90,23 @@ async def update_camera_status(camera_id: str, status: str) -> dict | None:
 
     updated_camera = await collection.find_one({"_id": object_id})
     return serialize_document(updated_camera)
+
+async def count_all_cameras():
+    db = await get_db()
+    collection = db["cameras"]
+    return await collection.count_documents({})
+
+async def count_active_cameras():
+    db = await get_db()
+    collection = db["cameras"]
+    return await collection.count_documents({"status": "active"})
+
+async def count_inactive_cameras():
+    db = await get_db()
+    collection = db["cameras"]
+    return await collection.count_documents({"status": "inactive"})
+
+async def count_maintenance_cameras():
+    db = await get_db()
+    collection = db["cameras"]
+    return await collection.count_documents({"status": "maintenance"})

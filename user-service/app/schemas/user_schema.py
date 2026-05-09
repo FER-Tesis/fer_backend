@@ -56,6 +56,6 @@ class UserResponse(BaseModel):
 class UserLookup(BaseModel):
     email: EmailStr
 
-class UserSummary(BaseModel):
+class UsersMetrics(BaseModel):
     totalUsers: int
     activeAgents: int
