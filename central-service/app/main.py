@@ -6,6 +6,7 @@ from app.api.monitoring_ws import router as monitoring_ws_router
 from app.api.export_routes import router as export_router
 from app.db.connection import connect_db, close_db
 from app.events.event_bus import event_bus
+from app.events.alert_event_publisher import alert_event_publisher
 from app.realtime.agent_emotion_listener import agent_emotion_listener
 from app.realtime.supervisor_listener import supervisor_listener
 from app.realtime.supervisor_camera_listener import supervisor_camera_listener
@@ -18,6 +19,7 @@ configure_cors(app)
 async def startup_event():
     await connect_db()
     await event_bus.connect()
+    await alert_event_publisher.connect()
     await agent_emotion_listener.start()
     await supervisor_listener.start()
     await supervisor_camera_listener.start()
@@ -28,6 +30,7 @@ async def shutdown_event():
     await supervisor_listener.stop()
     await supervisor_camera_listener.stop()
     await event_bus.disconnect()
+    await alert_event_publisher.disconnect()
     await close_db()
 
 app.include_router(emotion_router, prefix="/api/emotion", tags=["emotion"])

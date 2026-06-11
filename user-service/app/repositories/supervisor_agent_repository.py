@@ -22,6 +22,14 @@ async def get_by_supervisor(supervisor_id: str, limit: int = 200):
     relations = await collection.find({"supervisor_id": supervisor_id}).to_list(limit)
     return serialize_list(relations)
 
+async def get_supervisor_by_agent(agent_id: str) -> str | None:
+    """Obtener supervisor_id de un agente"""
+    db = await get_db()
+    collection = db["relations"]
+    
+    relation = await collection.find_one({"agent_id": agent_id})
+    return relation.get("supervisor_id") if relation else None
+
 async def delete_relation(relation_id: str):
     db = await get_db()
     collection = db["relations"]

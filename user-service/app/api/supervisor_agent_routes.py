@@ -81,6 +81,24 @@ async def delete_relation(relation_id: str):
 async def available_agents():
     return await supervisor_agent_service.get_available_agents()
 
+@router.get("/{agent_id}/supervisor", status_code=status.HTTP_200_OK)
+async def get_agent_supervisor(agent_id: str):
+    """Obtener supervisor_id de un agente"""
+    try:
+        supervisor_id = await supervisor_agent_service.get_supervisor_by_agent(agent_id)
+        return {"supervisor_id": supervisor_id}
+    except supervisor_agent_service.SupervisorAgentDomainError as e:
+        if str(e) == "agent_not_found":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Agent not found or not assigned to a supervisor",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request",
+        )
+
+
 @router.delete(
     "/{supervisor_id}/{agent_id}",
     status_code=status.HTTP_200_OK

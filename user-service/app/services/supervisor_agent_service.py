@@ -103,3 +103,11 @@ async def remove_agent(supervisor_id: str, agent_id: str) -> bool:
     )
 
     return True
+
+
+async def get_supervisor_by_agent(agent_id: str):
+    """Obtener supervisor_id de un agente"""
+    supervisor_id = await supervisor_agent_repository.get_supervisor_by_agent(str(agent_id))
+    if not supervisor_id:
+        raise SupervisorAgentDomainError("agent_not_found")
+    return supervisor_id

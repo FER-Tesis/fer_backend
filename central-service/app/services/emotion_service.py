@@ -3,6 +3,7 @@ import httpx
 
 from app.core.config import settings
 from app.events.event_bus import event_bus
+from app.events.alert_event_publisher import alert_event_publisher
 from app.enums.emotion_type import Emotion
 from app.schemas.emotion_schema import EmotionEventCreate
 from app.repositories import emotion_event_repository, current_status_repository
@@ -83,6 +84,7 @@ async def register_emotion_event(event: EmotionEventCreate) -> dict:
             timestamp=normalized_timestamp,
         )
 
+        # Publicar en DB 0 para WS
         await event_bus.publish(
             "agent-emotion-updated",
             {
@@ -90,6 +92,13 @@ async def register_emotion_event(event: EmotionEventCreate) -> dict:
                 "emotion": validated_emotion.value,
                 "timestamp": normalized_timestamp.isoformat(),
             },
+        )
+
+        # Publicar en DB 1 para evaluación de alertas emocionales
+        await alert_event_publisher.publish_emotion_alert_event(
+            agent_id=agent_id,
+            emotion=validated_emotion.value,
+            timestamp=normalized_timestamp.isoformat(),
         )
 
     return created_event
