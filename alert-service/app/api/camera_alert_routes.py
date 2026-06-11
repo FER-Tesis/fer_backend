@@ -117,3 +117,45 @@ async def list_camera_alert_history_for_supervisor(supervisor_id: str):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid request",
         )
+    
+@router.patch(
+    "/{alert_id}/resolve",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def resolve_camera_alert(alert_id: str):
+    try:
+        await camera_alert_service.resolve_camera_alert(alert_id)
+
+    except camera_alert_service.CameraAlertDomainError as e:
+        if str(e) == "camera_alert_not_found":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Camera alert not found",
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request",
+        )
+    
+@router.patch(
+    "/camera/{camera_id}/resolve-active",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def resolve_active_camera_alert_by_camera_id(camera_id: str):
+    try:
+        await camera_alert_service.resolve_active_camera_alert_by_camera_id(
+            camera_id
+        )
+
+    except camera_alert_service.CameraAlertDomainError as e:
+        if str(e) == "camera_alert_not_found":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Active camera alert not found",
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request",
+        )

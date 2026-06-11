@@ -6,7 +6,7 @@ from app.db.connection import connect_db, close_db
 from app.events.event_bus import event_bus
 from app.realtime.camera_alert_listener import camera_alert_listener
 
-app = FastAPI(title="Alert Service", version="1.0")
+app = FastAPI(title="Alert Service", version="1.0", root_path="/alerts")
 
 configure_cors(app)
 

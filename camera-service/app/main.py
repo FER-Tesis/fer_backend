@@ -5,7 +5,7 @@ from app.api.capture_routes import router as capture_router
 from app.db.connection import connect_db, close_db
 from app.events.event_bus import event_bus
 
-app = FastAPI(title="Camera Service", version="1.0")
+app = FastAPI(title="Camera Service", version="1.0", root_path="/cameras")
 
 configure_cors(app)
 

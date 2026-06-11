@@ -10,7 +10,7 @@ from app.realtime.agent_emotion_listener import agent_emotion_listener
 from app.realtime.supervisor_listener import supervisor_listener
 from app.realtime.supervisor_camera_listener import supervisor_camera_listener
 
-app = FastAPI(title="Central Service", version="1.0")
+app = FastAPI(title="Central Service", version="1.0", root_path="/central")
 
 configure_cors(app)
 

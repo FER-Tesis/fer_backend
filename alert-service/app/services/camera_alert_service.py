@@ -224,3 +224,19 @@ async def list_camera_alert_history_for_supervisor(
         agent_ids=agent_ids,
         limit=limit,
     )
+
+async def resolve_active_camera_alert_by_camera_id(camera_id: str):
+    alert = await camera_alert_repository.get_active_alert_by_camera_id(camera_id)
+
+    if not alert:
+        return None
+
+    await camera_alert_repository.resolve_camera_alert(alert["_id"])
+
+    await event_bus.publish(
+        "camera-alert-resolved",
+        {
+            "alert_id": alert["_id"],
+            "agent_id": alert["agent_id"],
+        },
+    )

@@ -24,6 +24,15 @@ async def _create_camera_alert(camera_id: str):
         if response.status_code not in (200, 201):
             raise CameraDomainError("camera_alert_creation_failed")
 
+async def _resolve_active_camera_alert(camera_id: str):
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.patch(
+            f"{settings.ALERT_SERVICE_URL}/camera/{camera_id}/resolve-active"
+        )
+
+        if response.status_code not in (200, 204, 404):
+            raise CameraDomainError("camera_alert_resolve_failed")
+
 async def validate_assigned_user(user_id: str):
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{settings.USER_SERVICE_URL}/users/{user_id}")
@@ -153,14 +162,12 @@ async def update_camera_status(camera_id: str, status: CameraStatus) -> dict:
     if not updated_camera:
         raise CameraDomainError("camera_not_found")
 
-    if (
-        status == CameraStatus.maintenance
-        and previous_status != CameraStatus.maintenance.value
-    ):
-        try:
+    if previous_status != updated_camera["status"]:
+        if updated_camera["status"] == CameraStatus.maintenance.value:
             await _create_camera_alert(camera_id)
-        except CameraDomainError:
-            raise
+    
+        if updated_camera["status"] == CameraStatus.active.value:
+            await _resolve_active_camera_alert(camera_id)
 
     if previous_status != updated_camera["status"]:
         await event_bus.publish(

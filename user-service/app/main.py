@@ -6,7 +6,7 @@ from app.api.supervisor_agent_routes import router as supervisor_agent_router
 from app.db.connection import connect_db, close_db
 from app.events.event_bus import event_bus
 
-app = FastAPI(title="User Service", version="1.0")
+app = FastAPI(title="User Service", version="1.0", root_path="/users")
 
 configure_cors(app)
 
