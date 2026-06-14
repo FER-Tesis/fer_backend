@@ -25,18 +25,23 @@ async def get_rule_by_id(rule_id: str) -> dict | None:
 async def get_active_rules_by_policy(policy_id: str) -> list[dict]:
     db = await get_db()
     collection = db["emotion_alert_rules"]
+
     cursor = collection.find({
-        "policy_id": ObjectId(policy_id),
-        "status": "active"
+        "policy_id": policy_id,
+        "status": "active",
     })
+
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
-
 
 async def get_all_rules_by_policy(policy_id: str) -> list[dict]:
     db = await get_db()
     collection = db["emotion_alert_rules"]
-    cursor = collection.find({"policy_id": ObjectId(policy_id)})
+
+    cursor = collection.find({
+        "policy_id": policy_id,
+    })
+
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
 

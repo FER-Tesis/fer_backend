@@ -71,7 +71,7 @@ class EmotionAlertRuleCreate(BaseModel):
     type: EmotionAlertRuleType = Field(..., example="negative_count")
     emotions: list[str] = Field(..., example=["sad", "anger", "fear", "disgust"])
     threshold: int = Field(..., example=5)
-    window_seconds: int = Field(..., example=600)
+    window_seconds: Optional[int] = Field(None, example=600)
     cooldown_seconds: int = Field(..., example=300)
     severity: EmotionAlertSeverity = Field(..., example="medium")
 
@@ -92,7 +92,7 @@ class EmotionAlertRuleResponse(BaseModel):
     type: EmotionAlertRuleType
     emotions: list[str]
     threshold: int
-    window_seconds: int
+    window_seconds: Optional[int] = None
     cooldown_seconds: int
     severity: EmotionAlertSeverity
     status: PolicyStatus
@@ -114,12 +114,13 @@ class EmotionWindow(BaseModel):
 
 class EmotionEvaluationStateResponse(BaseModel):
     id: PyObjectId = Field(alias="_id")
-    agent_id: PyObjectId
-    rule_id: PyObjectId
-    policy_id: PyObjectId
+    agent_id: str
+    rule_id: str
+    policy_id: str
     current_count: int
     emotions_window: list[EmotionWindow]
     continuous_emotion_start: Optional[datetime] = None
+    continuous_duration_seconds: int = 0
     last_alert_at: Optional[datetime] = None
     cooldown_end_at: Optional[datetime] = None
     updated_at: datetime
@@ -133,10 +134,10 @@ class EmotionEvaluationStateResponse(BaseModel):
 # ============== ALERT SCHEMAS ==============
 
 class EmotionAlertCreate(BaseModel):
-    agent_id: PyObjectId
-    supervisor_id: PyObjectId
-    policy_id: PyObjectId
-    rule_id: PyObjectId
+    agent_id: str
+    supervisor_id: str
+    policy_id: str
+    rule_id: str
     rule_type: EmotionAlertRuleType
     severity: EmotionAlertSeverity
 
@@ -147,10 +148,10 @@ class EmotionAlertUpdate(BaseModel):
 
 class EmotionAlertResponse(BaseModel):
     id: PyObjectId = Field(alias="_id")
-    agent_id: PyObjectId
-    supervisor_id: PyObjectId
-    policy_id: PyObjectId
-    rule_id: PyObjectId
+    agent_id: str
+    supervisor_id: str
+    policy_id: str
+    rule_id: str
     rule_type: EmotionAlertRuleType
     severity: EmotionAlertSeverity
     status: EmotionAlertStatus

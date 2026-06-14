@@ -182,11 +182,20 @@ async def get_agent_day_history(agent_id: str) -> AgentDayHistoryResponse:
 async def get_agent_week_history(agent_id: str) -> AgentWeekHistoryResponse:
     today = peru_today()
 
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=5)
+    week_start = today - timedelta(days=today.weekday())  # lunes
+    sunday = week_start + timedelta(days=6)
 
-    query_start = datetime(week_start.year, week_start.month, week_start.day, 13, 0, 0, tzinfo=timezone.utc)
-    query_end   = datetime(week_end.year, week_end.month, week_end.day, 23, 0, 0, tzinfo=timezone.utc)
+    query_start = datetime(
+        week_start.year, week_start.month, week_start.day,
+        13, 0, 0,
+        tzinfo=timezone.utc
+    )
+
+    query_end = datetime(
+        sunday.year, sunday.month, sunday.day,
+        23, 0, 0,
+        tzinfo=timezone.utc
+    )
 
     events = await emotion_event_repository.get_emotion_events_for_agent_between(
         agent_id,
@@ -202,15 +211,20 @@ async def get_agent_week_history(agent_id: str) -> AgentWeekHistoryResponse:
     labels = []
     values = []
 
-    for i in range(6):
-        day = week_start + timedelta(days=i)
+    days_to_include = [week_start + timedelta(days=i) for i in range(6)]
+
+    if sunday in events_by_day:
+        days_to_include.append(sunday)
+
+    for day in days_to_include:
         labels.append(day.isoformat())
 
-        if day not in events_by_day:
+        emotions = events_by_day.get(day)
+
+        if not emotions:
             values.append(None)
             continue
 
-        emotions = events_by_day[day]
         dominant = max(set(emotions), key=emotions.count)
         values.append(Emotion(dominant))
 

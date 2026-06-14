@@ -7,8 +7,15 @@ router = APIRouter()
 
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate):
-    new_user = await user_service.create_user(user)
-    return new_user
+    try:
+        new_user = await user_service.create_user(user)
+        return new_user
+    
+    except user_service.UserDomainError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 @router.get("/users", response_model=List[UserResponse])
 async def list_users():

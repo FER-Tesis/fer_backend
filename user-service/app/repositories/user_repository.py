@@ -69,7 +69,6 @@ async def count_all_users():
     collection = db["users"]
     return await collection.count_documents({})
 
-
 async def count_active_agents():
     db = await get_db()
     collection = db["users"]
@@ -82,3 +81,9 @@ async def get_users_by_role(role: str):
     db = await get_db()
     collection = db["users"]
     return await collection.find({"role": role}).to_list(None)
+
+async def exists_by_email(email: str):
+    db = await get_db()
+    collection = db["users"]
+    count = await collection.count_documents({"email": email})
+    return count > 0

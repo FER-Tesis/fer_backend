@@ -11,9 +11,9 @@ async def get_or_create_evaluation_state(agent_id: str, rule_id: str, policy_id:
     collection = db["emotion_evaluation_states"]
     
     query = {
-        "agent_id": ObjectId(agent_id),
-        "rule_id": ObjectId(rule_id),
-        "policy_id": ObjectId(policy_id),
+        "agent_id": agent_id,
+        "rule_id": rule_id,
+        "policy_id": policy_id,
     }
     
     # Intentar obtener
@@ -28,6 +28,7 @@ async def get_or_create_evaluation_state(agent_id: str, rule_id: str, policy_id:
         "current_count": 0,
         "emotions_window": [],
         "continuous_emotion_start": None,
+        "continuous_duration_seconds": 0,
         "last_alert_at": None,
         "cooldown_end_at": None,
         "updated_at": datetime.utcnow(),
@@ -65,8 +66,8 @@ async def get_evaluation_states_by_agent_and_policy(agent_id: str, policy_id: st
     db = await get_db()
     collection = db["emotion_evaluation_states"]
     cursor = collection.find({
-        "agent_id": ObjectId(agent_id),
-        "policy_id": ObjectId(policy_id),
+        "agent_id": agent_id,
+        "policy_id": policy_id,
     })
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
@@ -76,7 +77,7 @@ async def delete_evaluation_states_by_policy(policy_id: str):
     """Eliminar todos los estados de evaluación de una política"""
     db = await get_db()
     collection = db["emotion_evaluation_states"]
-    await collection.delete_many({"policy_id": ObjectId(policy_id)})
+    await collection.delete_many({"policy_id": policy_id})
 
 
 async def delete_evaluation_states_by_agent_and_policy(agent_id: str, policy_id: str):
@@ -84,6 +85,6 @@ async def delete_evaluation_states_by_agent_and_policy(agent_id: str, policy_id:
     db = await get_db()
     collection = db["emotion_evaluation_states"]
     await collection.delete_many({
-        "agent_id": ObjectId(agent_id),
-        "policy_id": ObjectId(policy_id),
+        "agent_id": agent_id,
+        "policy_id": policy_id,
     })

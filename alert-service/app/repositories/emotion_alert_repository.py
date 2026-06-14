@@ -27,7 +27,7 @@ async def get_alerts_by_agent(agent_id: str, limit: int = 100) -> list[dict]:
     """Obtener todas las alertas de un agente"""
     db = await get_db()
     collection = db["emotion_alerts"]
-    cursor = collection.find({"agent_id": ObjectId(agent_id)}).sort("created_at", -1).limit(limit)
+    cursor = collection.find({"agent_id": agent_id}).sort("created_at", -1).limit(limit)
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
 
@@ -36,7 +36,7 @@ async def get_alerts_by_supervisor(supervisor_id: str, limit: int = 100) -> list
     """Obtener todas las alertas de un supervisor"""
     db = await get_db()
     collection = db["emotion_alerts"]
-    cursor = collection.find({"supervisor_id": ObjectId(supervisor_id)}).sort("created_at", -1).limit(limit)
+    cursor = collection.find({"supervisor_id": supervisor_id}).sort("created_at", -1).limit(limit)
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
 
@@ -73,8 +73,33 @@ async def get_alerts_by_agent_and_supervisor(agent_id: str, supervisor_id: str, 
     db = await get_db()
     collection = db["emotion_alerts"]
     cursor = collection.find({
-        "agent_id": ObjectId(agent_id),
-        "supervisor_id": ObjectId(supervisor_id)
+        "agent_id": agent_id,
+        "supervisor_id": supervisor_id
     }).sort("created_at", -1).limit(limit)
+    docs = await cursor.to_list(length=None)
+    return serialize_list(docs)
+
+async def get_pending_alerts_by_agent(agent_id: str, limit: int = 100) -> list[dict]:
+    db = await get_db()
+    collection = db["emotion_alerts"]
+
+    cursor = collection.find({
+        "agent_id": agent_id,
+        "status": "pending",
+    }).sort("created_at", -1).limit(limit)
+
+    docs = await cursor.to_list(length=None)
+    return serialize_list(docs)
+
+
+async def get_pending_alerts_by_agents(agent_ids: list[str], limit: int = 100) -> list[dict]:
+    db = await get_db()
+    collection = db["emotion_alerts"]
+
+    cursor = collection.find({
+        "agent_id": {"$in": agent_ids},
+        "status": "pending",
+    }).sort("created_at", -1).limit(limit)
+
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)

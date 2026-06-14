@@ -17,6 +17,7 @@ from app.repositories import (
     emotion_alert_repository,
 )
 from app.services.emotion_alert_evaluation_service import reset_policy_states
+from app.services import emotion_alert_service
 
 router = APIRouter()
 
@@ -154,6 +155,13 @@ async def get_supervisor_alerts(supervisor_id: str, limit: int = 100):
     alerts = await emotion_alert_repository.get_alerts_by_supervisor(supervisor_id, limit)
     return alerts
 
+@router.get("/supervisors/{supervisor_id}/alerts/pending", response_model=list[EmotionAlertResponse])
+async def get_supervisor_pending_alerts(supervisor_id: str, limit: int = 100):
+    return await emotion_alert_service.list_pending_emotion_alerts_for_supervisor(
+        supervisor_id,
+        limit,
+    )
+
 
 @router.get("/alerts/status/pending")
 async def get_pending_alerts(limit: int = 100):
@@ -162,13 +170,16 @@ async def get_pending_alerts(limit: int = 100):
     return alerts
 
 
-@router.patch("/alerts/{alert_id}")
-async def update_alert(alert_id: str, update_data: dict):
-    """Actualizar estado de una alerta"""
-    updated_alert = await emotion_alert_repository.update_alert(alert_id, update_data)
-    if not updated_alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
-    return updated_alert
+@router.patch("/alerts/{alert_id}/acknowledge", response_model=EmotionAlertResponse)
+async def acknowledge_alert(alert_id: str):
+    try:
+        return await emotion_alert_service.acknowledge_emotion_alert(alert_id)
+
+    except emotion_alert_service.EmotionAlertDomainError as e:
+        if str(e) == "emotion_alert_not_found":
+            raise HTTPException(status_code=404, detail="Alert not found")
+
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 # ============== EVALUATION STATE ENDPOINTS ==============

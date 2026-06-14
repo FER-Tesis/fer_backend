@@ -26,7 +26,7 @@ async def get_active_policy_by_supervisor(supervisor_id: str) -> dict | None:
     db = await get_db()
     collection = db["emotion_alert_policies"]
     doc = await collection.find_one({
-        "supervisor_id": ObjectId(supervisor_id),
+        "supervisor_id": supervisor_id,
         "status": "active"
     })
     return serialize_document(doc) if doc else None
@@ -35,7 +35,7 @@ async def get_active_policy_by_supervisor(supervisor_id: str) -> dict | None:
 async def get_all_policies_by_supervisor(supervisor_id: str) -> list[dict]:
     db = await get_db()
     collection = db["emotion_alert_policies"]
-    cursor = collection.find({"supervisor_id": ObjectId(supervisor_id)})
+    cursor = collection.find({"supervisor_id": supervisor_id})
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
 
@@ -56,6 +56,6 @@ async def deactivate_all_supervisor_policies(supervisor_id: str):
     db = await get_db()
     collection = db["emotion_alert_policies"]
     await collection.update_many(
-        {"supervisor_id": ObjectId(supervisor_id)},
+        {"supervisor_id": supervisor_id},
         {"$set": {"status": "inactive", "updated_at": datetime.utcnow()}}
     )
