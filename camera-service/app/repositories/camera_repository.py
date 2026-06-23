@@ -2,6 +2,7 @@ from datetime import datetime
 from bson import ObjectId
 from app.db.connection import get_db
 from app.utils.mongo_helpers import serialize_document, serialize_list
+from app.utils.text_normalizer import normalize_text
 
 async def create_camera(camera_data: dict) -> dict:
     db = await get_db()
@@ -35,6 +36,21 @@ async def get_camera_by_ip(ip_address: str) -> dict | None:
     doc = await collection.find_one({"ip_address": ip_address})
 
     return serialize_document(doc)
+
+async def get_camera_by_name(name: str) -> dict | None:
+    db = await get_db()
+    collection = db["cameras"]
+
+    normalized_name = normalize_text(name)
+
+    cursor = collection.find({})
+    async for doc in cursor:
+        camera = serialize_document(doc)
+
+        if normalize_text(camera.get("name", "")) == normalized_name:
+            return camera
+
+    return None
 
 async def update_camera(camera_id: str, data: dict) -> dict | None:
     if not ObjectId.is_valid(camera_id):

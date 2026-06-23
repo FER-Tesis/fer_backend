@@ -103,3 +103,17 @@ async def get_pending_alerts_by_agents(agent_ids: list[str], limit: int = 100) -
 
     docs = await cursor.to_list(length=None)
     return serialize_list(docs)
+
+
+async def delete_alerts_by_agent(agent_id: str) -> int:
+    """Eliminar todas las alertas emocionales de un agente"""
+    db = await get_db()
+    collection = db["emotion_alerts"]
+    result = await collection.delete_many({"agent_id": agent_id})
+    return result.deleted_count
+
+async def delete_alerts_by_agent_id(agent_id: str) -> int:
+    db = await get_db()
+    collection = db["emotion_alerts"]
+    result = await collection.delete_many({"agent_id": agent_id})
+    return result.deleted_count

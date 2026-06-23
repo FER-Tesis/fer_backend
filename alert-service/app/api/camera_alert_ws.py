@@ -38,3 +38,28 @@ async def websocket_supervisor_active_camera_alerts(
 
     finally:
         camera_alert_manager.unregister(supervisor_id, websocket)
+
+@router.websocket("/admin/active")
+async def websocket_admin_active_camera_alerts(websocket: WebSocket):
+    await camera_alert_manager.register_admin(websocket)
+
+    try:
+        initial_alerts = await camera_alert_service.list_active_camera_alerts()
+
+        camera_alert_manager.load_initial_admin_active_alerts(
+            alerts=initial_alerts,
+        )
+
+        await camera_alert_manager.broadcast_admin_active_alerts()
+
+        while True:
+            await websocket.receive()
+
+    except WebSocketDisconnect:
+        print("Admin camera alerts WS desconectado")
+
+    except Exception as e:
+        print(f"Error en WS camera alerts admin: {e}")
+
+    finally:
+        camera_alert_manager.unregister_admin(websocket)

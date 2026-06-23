@@ -292,3 +292,7 @@ async def evaluate_emotion_event(
 async def reset_policy_states(policy_id: str):
     """Resetear todos los estados de evaluación de una política"""
     await emotion_evaluation_state_repository.delete_evaluation_states_by_policy(policy_id)
+
+async def delete_emotion_evaluation_states_by_agent(agent_id: str):
+    """Eliminar todos los estados de evaluación de un agente"""
+    await emotion_evaluation_state_repository.delete_evaluation_states_by_agent(agent_id)

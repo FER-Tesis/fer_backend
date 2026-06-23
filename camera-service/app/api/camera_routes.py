@@ -15,6 +15,9 @@ async def create_camera(camera: CameraCreate):
         if str(e) == "duplicate_ip":
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A camera with this IP already exists")
         
+        if str(e) == "duplicate_name":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya existe una cámara con este nombre.")
+        
         if str(e) == "invalid_status":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status")
         
@@ -59,6 +62,12 @@ async def update_camera(camera_id: str, camera_update: CameraUpdate):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid status"
+            )
+        
+        if str(e) == "duplicate_name":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe una cámara con este nombre."
             )
 
         if str(e) == "cannot_activate_from_maintenance":

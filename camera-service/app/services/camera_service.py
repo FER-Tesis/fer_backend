@@ -1,8 +1,6 @@
-from datetime import datetime
 import httpx
-from fastapi import HTTPException, status
 from app.repositories import camera_repository
-from app.schemas.camera_schema import CameraCreate, CameraUpdate, CamerasMetrics
+from app.schemas.camera_schema import CameraCreate, CamerasMetrics
 from app.enums.camera_status import CameraStatus
 from app.core.config import settings
 from app.events.event_bus import event_bus
@@ -50,8 +48,12 @@ async def create_camera(camera: CameraCreate) -> dict:
     if camera.assigned_user_id:
         await validate_assigned_user(camera.assigned_user_id)
 
-    existing = await camera_repository.get_camera_by_ip(camera.ip_address)
-    if existing:
+    existing_name = await camera_repository.get_camera_by_name(camera.name)
+    if existing_name:
+        raise CameraDomainError("duplicate_name")
+
+    existing_ip = await camera_repository.get_camera_by_ip(camera.ip_address)
+    if existing_ip:
         raise CameraDomainError("duplicate_ip")
 
     try:
@@ -87,6 +89,18 @@ async def update_camera(camera_id: str, update: dict) -> dict | None:
     current = await camera_repository.get_camera_by_id(camera_id)
     if not current:
         return None
+
+    if "name" in update and update["name"]:
+        existing_name = await camera_repository.get_camera_by_name(update["name"])
+
+        if existing_name and str(existing_name["_id"]) != str(current["_id"]):
+            raise CameraDomainError("duplicate_name")
+
+    if "ip_address" in update and update["ip_address"]:
+        existing_ip = await camera_repository.get_camera_by_ip(update["ip_address"])
+
+        if existing_ip and str(existing_ip["_id"]) != str(current["_id"]):
+            raise CameraDomainError("duplicate_ip")
 
     if "assigned_user_id" in update and update["assigned_user_id"]:
         await validate_assigned_user(update["assigned_user_id"])

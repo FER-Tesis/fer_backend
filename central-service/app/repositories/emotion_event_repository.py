@@ -55,3 +55,8 @@ async def get_emotion_events_between(
     cursor = collection.find(query).sort("timestamp", 1)
     items = await cursor.to_list(length=None)
     return serialize_list(items)
+
+async def delete_events_by_agent_id(agent_id: str):
+    db = await get_db()
+    collection = db["emotion_events"]
+    await collection.delete_many({"agent_id": agent_id})

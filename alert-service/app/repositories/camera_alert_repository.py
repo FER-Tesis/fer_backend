@@ -60,6 +60,18 @@ async def get_camera_alerts(limit: int = 100):
     items = await collection.find().sort("created_at", -1).to_list(limit)
     return serialize_list(items)
 
+async def get_active_camera_alerts(limit: int = 100):
+    db = await get_db()
+    collection = db["camera_alerts"]
+
+    items = await collection.find(
+        {
+            "status": "active",
+        }
+    ).sort("created_at", -1).to_list(limit)
+
+    return serialize_list(items)
+
 
 async def get_active_camera_alerts_for_agent(
     agent_id: str,

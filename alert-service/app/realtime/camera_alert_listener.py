@@ -76,6 +76,9 @@ class CameraAlertListener:
             pass
 
     async def _handle_camera_alert_created(self, payload: dict):
+        camera_alert_manager.apply_admin_alert_created(payload)
+        await camera_alert_manager.broadcast_admin_active_alerts()
+
         supervisor_ids = camera_alert_manager.apply_alert_created(payload)
 
         for supervisor_id in supervisor_ids:
@@ -84,6 +87,9 @@ class CameraAlertListener:
     async def _handle_camera_alert_resolved(self, payload: dict):
         alert_id = str(payload["alert_id"])
         agent_id = str(payload["agent_id"])
+
+        camera_alert_manager.apply_admin_alert_resolved(alert_id)
+        await camera_alert_manager.broadcast_admin_active_alerts()
 
         supervisor_ids = camera_alert_manager.apply_alert_resolved(
             alert_id=alert_id,
@@ -96,12 +102,15 @@ class CameraAlertListener:
     async def _handle_camera_alert_deleted(self, payload: dict):
         alert_id = str(payload["alert_id"])
         agent_id = str(payload["agent_id"])
-
+    
+        camera_alert_manager.apply_admin_alert_deleted(alert_id)
+        await camera_alert_manager.broadcast_admin_active_alerts()
+    
         supervisor_ids = camera_alert_manager.apply_alert_deleted(
             alert_id=alert_id,
             agent_id=agent_id,
         )
-
+    
         for supervisor_id in supervisor_ids:
             await camera_alert_manager.broadcast_active_alerts(supervisor_id)
 

@@ -16,6 +16,7 @@ from app.repositories import (
     emotion_evaluation_state_repository,
     emotion_alert_repository,
 )
+from app.services import emotion_alert_evaluation_service
 from app.services.emotion_alert_evaluation_service import reset_policy_states
 from app.services import emotion_alert_service
 
@@ -180,7 +181,13 @@ async def acknowledge_alert(alert_id: str):
             raise HTTPException(status_code=404, detail="Alert not found")
 
         raise HTTPException(status_code=400, detail="Invalid request")
-
+    
+@router.delete("/agents/{agent_id}/alerts")
+async def delete_agent_alerts(agent_id: str):
+    """Eliminar todas las alertas de un agente y sus respectivas evaluaciones de estado"""
+    deleted_count = await emotion_alert_service.delete_emotion_alert_by_agent_id(agent_id)
+    await emotion_alert_evaluation_service.delete_emotion_evaluation_states_by_agent(agent_id)
+    return {"deleted_count": deleted_count}
 
 # ============== EVALUATION STATE ENDPOINTS ==============
 
@@ -191,3 +198,4 @@ async def get_agent_policy_evaluation_states(agent_id: str, policy_id: str):
         agent_id, policy_id
     )
     return states
+

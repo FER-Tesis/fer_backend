@@ -59,6 +59,8 @@ class CurrentEmotionStatusResponse(BaseModel):
     agent_id: str
     emotion: Emotion
     timestamp: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(
         populate_by_name=True,

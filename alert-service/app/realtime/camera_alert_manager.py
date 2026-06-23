@@ -10,6 +10,9 @@ class CameraAlertManager:
         self.supervisor_agents: dict[str, set[str]] = defaultdict(set)
         self.agent_to_supervisors: dict[str, set[str]] = defaultdict(set)
 
+        self.admin_connections: set[WebSocket] = set()
+        self.admin_active_alerts: dict[str, dict] = {}
+
     async def register(self, supervisor_id: str, websocket: WebSocket):
         await websocket.accept()
         self.connections[supervisor_id].add(websocket)
@@ -159,6 +162,65 @@ class CameraAlertManager:
             "status": alert["status"],
             "created_at": created_at,
         }
+    
+    async def register_admin(self, websocket: WebSocket):
+        await websocket.accept()
+        self.admin_connections.add(websocket)
+    
+    
+    def unregister_admin(self, websocket: WebSocket):
+        self.admin_connections.discard(websocket)
+    
+        if not self.admin_connections:
+            self.admin_active_alerts.clear()
+    
+    
+    def load_initial_admin_active_alerts(self, alerts: list[dict]):
+        self.admin_active_alerts.clear()
+    
+        for alert in alerts:
+            alert_id = str(alert["_id"])
+            self.admin_active_alerts[alert_id] = self._normalize_alert(alert)
+    
+    
+    def apply_admin_alert_created(self, alert: dict):
+        normalized = self._normalize_alert(alert)
+        alert_id = str(normalized["_id"])
+    
+        self.admin_active_alerts[alert_id] = normalized
+    
+    
+    def apply_admin_alert_resolved(self, alert_id: str):
+        self.admin_active_alerts.pop(str(alert_id), None)
+    
+    
+    def apply_admin_alert_deleted(self, alert_id: str):
+        self.apply_admin_alert_resolved(alert_id)
+    
+    
+    def build_admin_active_alerts_payload(self) -> dict:
+        alerts = list(self.admin_active_alerts.values())
+        alerts.sort(key=lambda item: item["created_at"], reverse=True)
+    
+        return {
+            "type": "admin-camera-active-alerts-snapshot",
+            "alerts": deepcopy(alerts),
+        }
+    
+    
+    async def broadcast_admin_active_alerts(self):
+        payload = self.build_admin_active_alerts_payload()
+        sockets = list(self.admin_connections)
+        dead = []
+    
+        for ws in sockets:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead.append(ws)
+    
+        for ws in dead:
+            self.unregister_admin(ws)
 
 
 camera_alert_manager = CameraAlertManager()

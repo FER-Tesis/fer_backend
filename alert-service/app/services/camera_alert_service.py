@@ -201,6 +201,8 @@ async def list_active_camera_alerts_for_agent(
         limit=limit,
     )
 
+async def list_active_camera_alerts(limit: int = 100):
+    return await camera_alert_repository.get_active_camera_alerts(limit)
 
 async def list_active_camera_alerts_for_supervisor(
     supervisor_id: str,

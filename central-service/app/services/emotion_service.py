@@ -160,3 +160,7 @@ async def list_current_statuses(limit: int = 100):
 
 async def get_current_status(camera_id: str):
     return await current_status_repository.get_status_by_camera_id(camera_id)
+
+async def delete_emotion_events_by_agent_id(agent_id: str):
+    await emotion_event_repository.delete_events_by_agent_id(agent_id)
+    await current_status_repository.delete_status_by_agent_id(agent_id)

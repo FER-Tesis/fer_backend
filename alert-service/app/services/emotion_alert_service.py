@@ -89,3 +89,6 @@ async def acknowledge_emotion_alert(alert_id: str):
     )
 
     return updated
+
+async def delete_emotion_alert_by_agent_id(agent_id: str):
+    await emotion_alert_repository.delete_alerts_by_agent_id(agent_id)

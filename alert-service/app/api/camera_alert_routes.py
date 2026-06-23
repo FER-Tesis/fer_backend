@@ -58,6 +58,14 @@ async def create_camera_alert(payload: CameraAlertCreate):
 async def list_camera_alerts():
     return await camera_alert_service.list_camera_alerts()
 
+@router.get(
+    "/active",
+    response_model=List[CameraAlertResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def list_active_camera_alerts():
+    return await camera_alert_service.list_active_camera_alerts()
+
 
 @router.get(
     "/supervisor/{supervisor_id}/active",

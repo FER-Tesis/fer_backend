@@ -57,3 +57,11 @@ async def remove_by_supervisor_agent(supervisor_id: str, agent_id: str) -> bool:
     })
 
     return result.deleted_count == 1
+
+
+async def delete_relations_by_agent(agent_id: str) -> int:
+    """Eliminar todas las relaciones de un agente (como supervisado)"""
+    db = await get_db()
+    collection = db["relations"]
+    result = await collection.delete_many({"agent_id": agent_id})
+    return result.deleted_count

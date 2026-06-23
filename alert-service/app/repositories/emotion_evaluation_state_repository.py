@@ -88,3 +88,11 @@ async def delete_evaluation_states_by_agent_and_policy(agent_id: str, policy_id:
         "agent_id": agent_id,
         "policy_id": policy_id,
     })
+
+
+async def delete_evaluation_states_by_agent(agent_id: str) -> int:
+    """Eliminar todos los estados de evaluación de un agente"""
+    db = await get_db()
+    collection = db["emotion_evaluation_states"]
+    result = await collection.delete_many({"agent_id": agent_id})
+    return result.deleted_count

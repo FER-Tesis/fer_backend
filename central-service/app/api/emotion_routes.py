@@ -78,3 +78,10 @@ async def get_current_status(camera_id: str):
         )
 
     return status_doc
+
+@router.delete(
+    "/agent/{agent_id}/emotion-data",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_emotion_data_by_agent_id(agent_id: str):
+    await emotion_service.delete_emotion_events_by_agent_id(agent_id)
